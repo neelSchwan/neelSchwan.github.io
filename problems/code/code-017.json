@@ -1,0 +1,10 @@
+{
+  "id": "code-017",
+  "track": "code",
+  "title": "Count Queen Placements",
+  "difficulty": "hard",
+  "lang": "python",
+  "prompt": "On an n x n chessboard, you want to place n queens so that no two queens attack each other (no two share a row, a column, or a diagonal). Return the number of distinct ways to do this. For n = 0, return 1 (the empty placement).\n\nExample:\n  count_queen_placements(4) -> 2\n  count_queen_placements(3) -> 0",
+  "starter": "def count_queen_placements(n):\n    # your code here\n    pass\n",
+  "tests": "def test_four():\n    assert count_queen_placements(4) == 2\n\ndef test_small_impossible():\n    assert count_queen_placements(2) == 0\n    assert count_queen_placements(3) == 0\n\ndef test_trivial():\n    assert count_queen_placements(1) == 1\n    assert count_queen_placements(0) == 1\n\ndef test_six_and_eight():\n    assert count_queen_placements(6) == 4\n    assert count_queen_placements(8) == 92\n"
+}

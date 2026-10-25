@@ -1,0 +1,10 @@
+{
+  "id": "rust-004",
+  "track": "rust",
+  "title": "Iterator Adapters Warm-up",
+  "difficulty": "easy",
+  "lang": "rust",
+  "prompt": "Implement three small functions using iterator adapters (map, filter, fold, scan, zip, etc.) rather than index-based loops.\n\n1. sum_sq_odds(v): the sum of squares of the odd numbers in v (negative odd numbers count too).\n2. running_max(v): a Vec where element i is the maximum of v[0..=i]. Empty input gives an empty Vec.\n3. pairwise_diffs(v): a Vec of v[i+1] - v[i] for each adjacent pair. Fewer than 2 elements gives an empty Vec.\n\nExample:\n  sum_sq_odds(&[1, 2, 3, -5]) -> 35\n  running_max(&[3, 1, 4, 1, 5]) -> [3, 3, 4, 4, 5]\n  pairwise_diffs(&[1, 4, 9, 16]) -> [3, 5, 7]",
+  "starter": "#![allow(dead_code)]\n\npub fn sum_sq_odds(v: &[i64]) -> i64 {\n    todo!()\n}\n\npub fn running_max(v: &[i32]) -> Vec<i32> {\n    todo!()\n}\n\npub fn pairwise_diffs(v: &[i32]) -> Vec<i32> {\n    todo!()\n}\n",
+  "tests": "#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn sum_sq_odds_basic() {\n        assert_eq!(sum_sq_odds(&[1, 2, 3, -5]), 35);\n        assert_eq!(sum_sq_odds(&[2, 4, 6]), 0);\n        assert_eq!(sum_sq_odds(&[]), 0);\n    }\n\n    #[test]\n    fn running_max_basic() {\n        assert_eq!(running_max(&[3, 1, 4, 1, 5]), vec![3, 3, 4, 4, 5]);\n        assert_eq!(running_max(&[-3, -5, -1]), vec![-3, -3, -1]);\n    }\n\n    #[test]\n    fn running_max_empty() {\n        assert_eq!(running_max(&[]), Vec::<i32>::new());\n    }\n\n    #[test]\n    fn diffs() {\n        assert_eq!(pairwise_diffs(&[1, 4, 9, 16]), vec![3, 5, 7]);\n        assert_eq!(pairwise_diffs(&[5]), Vec::<i32>::new());\n        assert_eq!(pairwise_diffs(&[]), Vec::<i32>::new());\n        assert_eq!(pairwise_diffs(&[10, 3]), vec![-7]);\n    }\n}"
+}

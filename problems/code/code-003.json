@@ -1,0 +1,10 @@
+{
+  "id": "code-003",
+  "track": "code",
+  "title": "Group Anagrams",
+  "difficulty": "medium",
+  "lang": "python",
+  "prompt": "Given a list of lowercase words, group together the words that are anagrams of each other (they use exactly the same letters with the same counts). Return a list of groups, where each group is a list of words.\n\nThe order of the groups and the order of words inside each group do not matter. Every input word must appear in exactly one group (duplicates stay duplicates).\n\nExample:\n  group_anagrams([\"listen\", \"pots\", \"silent\", \"stop\", \"tops\", \"cat\"])\n  -> [[\"listen\", \"silent\"], [\"pots\", \"stop\", \"tops\"], [\"cat\"]]   (any order)",
+  "starter": "def group_anagrams(words):\n    # your code here\n    pass\n",
+  "tests": "def _norm(groups):\n    return sorted(sorted(g) for g in groups)\n\ndef test_basic():\n    out = group_anagrams([\"listen\", \"pots\", \"silent\", \"stop\", \"tops\", \"cat\"])\n    assert _norm(out) == _norm([[\"listen\", \"silent\"], [\"pots\", \"stop\", \"tops\"], [\"cat\"]])\n\ndef test_empty_list():\n    assert group_anagrams([]) == []\n\ndef test_empty_strings():\n    assert _norm(group_anagrams([\"\", \"\", \"a\"])) == _norm([[\"\", \"\"], [\"a\"]])\n\ndef test_no_anagrams():\n    assert _norm(group_anagrams([\"ab\", \"cd\", \"ef\"])) == _norm([[\"ab\"], [\"cd\"], [\"ef\"]])\n\ndef test_same_letters_different_counts():\n    assert _norm(group_anagrams([\"aab\", \"abb\", \"baa\"])) == _norm([[\"aab\", \"baa\"], [\"abb\"]])\n"
+}

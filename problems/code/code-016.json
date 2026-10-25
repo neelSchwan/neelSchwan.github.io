@@ -1,0 +1,10 @@
+{
+  "id": "code-016",
+  "track": "code",
+  "title": "Target Sum Combinations",
+  "difficulty": "medium",
+  "lang": "python",
+  "prompt": "Given a list of distinct positive integers candidates and a positive integer target, return every unique combination of candidates whose values sum to target. Each candidate may be used any number of times. Two combinations are the same if they use the same values the same number of times, regardless of order.\n\nReturn a list of combinations; the order of combinations and the order within each combination do not matter. If none exist, return an empty list.\n\nExample:\n  sum_combinations([2, 3, 5], 8) -> [[2, 2, 2, 2], [2, 3, 3], [3, 5]]   (any order)",
+  "starter": "def sum_combinations(candidates, target):\n    # your code here\n    pass\n",
+  "tests": "def _norm(combos):\n    return sorted(sorted(c) for c in combos)\n\ndef test_basic():\n    assert _norm(sum_combinations([2, 3, 5], 8)) == [[2, 2, 2, 2], [2, 3, 3], [3, 5]]\n\ndef test_none_possible():\n    assert sum_combinations([4, 6], 3) == []\n\ndef test_single_candidate():\n    assert _norm(sum_combinations([3], 9)) == [[3, 3, 3]]\n\ndef test_no_duplicate_orderings():\n    out = sum_combinations([2, 3, 6, 7], 7)\n    assert _norm(out) == [[2, 2, 3], [7]]\n    assert len(out) == 2\n\ndef test_count():\n    out = sum_combinations([1, 2, 5], 10)\n    assert len(out) == 10\n    assert all(sum(c) == 10 for c in out)\n"
+}

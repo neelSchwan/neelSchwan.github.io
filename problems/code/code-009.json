@@ -1,0 +1,10 @@
+{
+  "id": "code-009",
+  "track": "code",
+  "title": "Binary Tree Height",
+  "difficulty": "easy",
+  "lang": "python",
+  "prompt": "Given the root of a binary tree made of TreeNode objects (val, left, right), return the number of nodes on the longest path from the root down to any leaf. An empty tree (root is None) has height 0, and a single node has height 1.\n\nExample:\n        3\n       / \\\n      9   20\n         /  \\\n        15   7\n  tree_height(root) -> 3",
+  "starter": "class TreeNode:\n    def __init__(self, val=0, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n\ndef tree_height(root):\n    # your code here\n    pass\n",
+  "tests": "T = TreeNode\n\ndef test_example():\n    root = T(3, T(9), T(20, T(15), T(7)))\n    assert tree_height(root) == 3\n\ndef test_empty():\n    assert tree_height(None) == 0\n\ndef test_single():\n    assert tree_height(T(1)) == 1\n\ndef test_lopsided():\n    root = T(1, None, T(2, T(3, None, T(4))))\n    assert tree_height(root) == 4\n\ndef test_deep_chain():\n    root = None\n    for i in range(500):\n        root = T(i, root, None)\n    assert tree_height(root) == 500\n"
+}

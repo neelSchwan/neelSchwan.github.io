@@ -1,0 +1,10 @@
+{
+  "id": "code-011",
+  "track": "code",
+  "title": "Count the Islands",
+  "difficulty": "medium",
+  "lang": "python",
+  "prompt": "You are given a rectangular grid as a list of strings, where '#' is land and '.' is water. An island is a group of land cells connected horizontally or vertically (not diagonally). Return the number of islands. The grid may be empty.\n\nDo not assume you can modify the input in place (strings are immutable anyway).\n\nExample:\n  count_islands([\n      \"##..#\",\n      \"#...#\",\n      \"..#..\",\n      \"....#\",\n  ]) -> 4",
+  "starter": "def count_islands(grid):\n    # your code here\n    pass\n",
+  "tests": "def test_example():\n    assert count_islands([\"##..#\", \"#...#\", \"..#..\", \"....#\"]) == 4\n\ndef test_empty():\n    assert count_islands([]) == 0\n    assert count_islands([\"\"]) == 0\n\ndef test_all_water():\n    assert count_islands([\"...\", \"...\"]) == 0\n\ndef test_diagonal_not_connected():\n    assert count_islands([\"#.#\", \".#.\", \"#.#\"]) == 5\n\ndef test_snake_and_large():\n    assert count_islands([\"###\", \"..#\", \"###\", \"#..\", \"###\"]) == 1\n    big = [\"#\" * 300 for _ in range(300)]\n    assert count_islands(big) == 1\n"
+}

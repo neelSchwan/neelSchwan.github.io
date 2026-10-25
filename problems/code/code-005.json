@@ -1,0 +1,10 @@
+{
+  "id": "code-005",
+  "track": "code",
+  "title": "Palindrome After Cleanup",
+  "difficulty": "easy",
+  "lang": "python",
+  "prompt": "Given a string s, decide whether it reads the same forwards and backwards after you ignore every character that is not a letter or digit and treat uppercase and lowercase letters as equal. A string with no letters or digits counts as a palindrome.\n\nTry to solve it with two pointers and O(1) extra space.\n\nExample:\n  is_clean_palindrome(\"Was it a car, or a cat I saw?\") -> True\n  is_clean_palindrome(\"race a car\") -> False",
+  "starter": "def is_clean_palindrome(s):\n    # your code here\n    pass\n",
+  "tests": "def test_true_case():\n    assert is_clean_palindrome(\"Was it a car, or a cat I saw?\") is True\n\ndef test_false_case():\n    assert is_clean_palindrome(\"race a car\") is False\n\ndef test_only_punctuation():\n    assert is_clean_palindrome(\" ,.!\") is True\n\ndef test_digits():\n    assert is_clean_palindrome(\"1a2\") is False\n    assert is_clean_palindrome(\"12:21\") is True\n\ndef test_mixed_case():\n    assert is_clean_palindrome(\"No 'x' in Nixon\") is True\n"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "code-004",
+  "track": "code",
+  "title": "Smallest Covering Window",
+  "difficulty": "hard",
+  "lang": "python",
+  "prompt": "Given two strings s and t, find the shortest contiguous substring of s that contains every character of t, counting multiplicity (if t has two 'a's, the window needs at least two 'a's). Return that substring. If no such window exists, return the empty string \"\". When several shortest windows exist, return the one that starts earliest.\n\nExample:\n  min_cover_window(\"XADOBECODEBANC\", \"ABC\") -> \"BANC\"\n  min_cover_window(\"a\", \"aa\") -> \"\"",
+  "starter": "def min_cover_window(s, t):\n    # your code here\n    pass\n",
+  "tests": "def test_basic():\n    assert min_cover_window(\"XADOBECODEBANC\", \"ABC\") == \"BANC\"\n\ndef test_impossible():\n    assert min_cover_window(\"a\", \"aa\") == \"\"\n    assert min_cover_window(\"abc\", \"z\") == \"\"\n\ndef test_whole_string():\n    assert min_cover_window(\"abc\", \"cba\") == \"abc\"\n\ndef test_multiplicity():\n    assert min_cover_window(\"baxab\", \"aab\") == \"baxa\"\n    assert min_cover_window(\"abcab\", \"aab\") == \"abca\"\n\ndef test_earliest_tie():\n    assert min_cover_window(\"abxba\", \"ab\") == \"ab\"\n\ndef test_large():\n    s = \"x\" * 20000 + \"ab\" + \"y\" * 20000\n    assert min_cover_window(s, \"ba\") == \"ab\"\n"
+}

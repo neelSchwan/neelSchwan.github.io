@@ -1,0 +1,10 @@
+{
+  "id": "code-019",
+  "track": "code",
+  "title": "Least Recently Used Cache",
+  "difficulty": "medium",
+  "lang": "python",
+  "prompt": "Implement a class LRUCache with a fixed positive capacity that supports:\n\n  get(key)        return the value stored for key, or -1 if key is absent. A successful get counts as a use.\n  put(key, value) store value under key (overwriting any existing value; this counts as a use). If inserting a new key would exceed capacity, first evict the key that was used least recently.\n\nBoth operations should run in O(1) average time.\n\nExample:\n  c = LRUCache(2)\n  c.put(1, 10); c.put(2, 20)\n  c.get(1)      -> 10\n  c.put(3, 30)  # evicts key 2\n  c.get(2)      -> -1",
+  "starter": "class LRUCache:\n    def __init__(self, capacity):\n        # your code here\n        pass\n\n    def get(self, key):\n        pass\n\n    def put(self, key, value):\n        pass\n",
+  "tests": "def test_example():\n    c = LRUCache(2)\n    c.put(1, 10)\n    c.put(2, 20)\n    assert c.get(1) == 10\n    c.put(3, 30)\n    assert c.get(2) == -1\n    assert c.get(3) == 30\n\ndef test_missing_key():\n    c = LRUCache(1)\n    assert c.get(99) == -1\n\ndef test_overwrite_refreshes():\n    c = LRUCache(2)\n    c.put(1, 1)\n    c.put(2, 2)\n    c.put(1, 100)\n    c.put(3, 3)\n    assert c.get(1) == 100\n    assert c.get(2) == -1\n\ndef test_capacity_one():\n    c = LRUCache(1)\n    c.put(1, 1)\n    c.put(2, 2)\n    assert c.get(1) == -1\n    assert c.get(2) == 2\n\ndef test_many_ops_fast():\n    c = LRUCache(1000)\n    for i in range(50000):\n        c.put(i, i * 2)\n        c.get(i - 500)\n    assert c.get(49999) == 99998\n    assert c.get(10) == -1\n"
+}

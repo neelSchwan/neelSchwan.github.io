@@ -1,0 +1,10 @@
+{
+  "id": "code-008",
+  "track": "code",
+  "title": "Merge Two Sorted Linked Lists",
+  "difficulty": "easy",
+  "lang": "python",
+  "prompt": "You are given the heads of two singly linked lists (ListNode objects), each already sorted in non-decreasing order. Splice their nodes together into one sorted list and return its head. Either input may be None (empty).\n\nExample:\n  a: 1 -> 4 -> 6     b: 2 -> 4 -> 9\n  result: 1 -> 2 -> 4 -> 4 -> 6 -> 9",
+  "starter": "class ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val\n        self.next = next\n\ndef merge_sorted_lists(a, b):\n    # your code here\n    pass\n",
+  "tests": "def _build(vals):\n    head = None\n    for v in reversed(vals):\n        head = ListNode(v, head)\n    return head\n\ndef _to_list(node):\n    out = []\n    while node is not None and len(out) < 10000:\n        out.append(node.val)\n        node = node.next\n    return out\n\ndef test_basic():\n    assert _to_list(merge_sorted_lists(_build([1, 4, 6]), _build([2, 4, 9]))) == [1, 2, 4, 4, 6, 9]\n\ndef test_one_empty():\n    assert _to_list(merge_sorted_lists(None, _build([0, 3]))) == [0, 3]\n    assert _to_list(merge_sorted_lists(_build([5]), None)) == [5]\n\ndef test_both_empty():\n    assert merge_sorted_lists(None, None) is None\n    assert _to_list(merge_sorted_lists(_build([]), _build([1]))) == [1]\n\ndef test_disjoint_ranges():\n    assert _to_list(merge_sorted_lists(_build([10, 11]), _build([1, 2, 3]))) == [1, 2, 3, 10, 11]\n\ndef test_negatives_and_duplicates():\n    assert _to_list(merge_sorted_lists(_build([-3, -3, 0]), _build([-3, 1]))) == [-3, -3, -3, 0, 1]\n"
+}

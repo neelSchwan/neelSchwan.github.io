@@ -1,0 +1,10 @@
+{
+  "id": "code-006",
+  "track": "code",
+  "title": "Search a Rotated Sorted List",
+  "difficulty": "medium",
+  "lang": "python",
+  "prompt": "A list of distinct integers was sorted in ascending order and then rotated at some unknown pivot (for example [1,2,3,4,5,6] might become [4,5,6,1,2,3]). Given this list nums and a value target, return the index of target in nums, or -1 if it is absent.\n\nYour solution should run in O(log n) time.\n\nExample:\n  search_rotated([4, 5, 6, 1, 2, 3], 2) -> 4\n  search_rotated([4, 5, 6, 1, 2, 3], 7) -> -1",
+  "starter": "def search_rotated(nums, target):\n    # your code here\n    pass\n",
+  "tests": "def test_found_right_half():\n    assert search_rotated([4, 5, 6, 1, 2, 3], 2) == 4\n\ndef test_found_left_half():\n    assert search_rotated([4, 5, 6, 1, 2, 3], 5) == 1\n\ndef test_missing():\n    assert search_rotated([4, 5, 6, 1, 2, 3], 7) == -1\n\ndef test_empty_and_single():\n    assert search_rotated([], 1) == -1\n    assert search_rotated([9], 9) == 0\n\ndef test_not_rotated_and_large():\n    nums = list(range(0, 200000, 2))\n    assert search_rotated(nums, 1234) == 617\n    rot = nums[70000:] + nums[:70000]\n    assert search_rotated(rot, 4) == len(nums) - 70000 + 2\n    assert search_rotated(rot, 3) == -1\n"
+}

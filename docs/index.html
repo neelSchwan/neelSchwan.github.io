@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loop {}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: #f4ecd8; color: #222; font: 15px/1.5 "Courier New", Courier, monospace; }
+  header { height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 12px;
+           border-bottom: 3px double #222; white-space: nowrap; overflow-x: auto; }
+  header b { font-size: 20px; letter-spacing: 1px; }
+  a { color: #1a3cb0; }
+  a.on { color: #222; font-weight: bold; text-decoration: none; }
+  /* tiktok-style: one problem per screen, snap to each */
+  #feed { height: calc(100dvh - 44px); overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+  .card { height: 100%; scroll-snap-align: start; scroll-snap-stop: always; overflow-y: auto;
+          border-bottom: 1px dashed #222; padding: 16px 12px 40px; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  /* leetcode-style split on wide screens: problem left, code right */
+  @media (min-width: 1000px) {
+    .card { padding-bottom: 16px; }
+    .wrap { max-width: 1400px; height: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .wrap > div { overflow-y: auto; padding-right: 6px; }
+    .wrap .CodeMirror { height: 55vh; }
+  }
+  .card h2 { font-size: 18px; margin: 4px 0 8px; }
+  .tag { border: 1px solid #222; padding: 0 4px; font-size: 12px; margin-right: 4px; text-transform: uppercase; }
+  .hint { color: #776; font-size: 12px; text-align: center; margin-top: 16px; }
+  pre { white-space: pre-wrap; word-wrap: break-word; margin: 8px 0; }
+  pre.out { background: #222; color: #e8e8d0; padding: 8px; max-height: 300px; overflow: auto; }
+  pre.out.ok { color: #9f9; } pre.out.bad { color: #f99; }
+  textarea { width: 100%; min-height: 220px; font: 13px/1.4 "Courier New", monospace; background: #fffaf0;
+             color: #222; border: 1px solid #222; padding: 6px; }
+  .CodeMirror { height: 320px; font: 13px/1.4 "Courier New", monospace; border: 1px solid #222; background: #fffaf0; }
+  .CodeMirror-gutters { background: #efe6cc; border-right: 1px solid #222; }
+  .CodeMirror-matchingbracket { background: #e0d6bc; }
+  button, select { font: inherit; background: #e0d6bc; color: #222; border: 1px solid #222;
+                   box-shadow: 2px 2px 0 #222; padding: 4px 12px; margin: 6px 6px 0 0; cursor: pointer; }
+  button:active { box-shadow: none; transform: translate(2px, 2px); }
+  button:disabled { opacity: .5; }
+  .keys { color: #776; font-size: 12px; }
+  dialog { width: min(900px, 100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0 auto;
+           border: 0; padding: 12px; background: #f4ecd8; color: #222; }
+  dialog .CodeMirror { height: 55dvh; }
+</style>
+</head>
+<body>
+<header>
+  <b>loop {}</b>
+  <a href="?">all</a><a href="?track=rust">rust</a><a href="?track=code">coding</a><a href="?track=design">design</a>
+  <button id="pg-open" style="margin:0">playground</button>
+</header>
+<main id="feed"></main>
+
+<dialog id="pg">
+  <b>playground</b> &mdash; free run, no tests
+  <div>
+    <select id="pg-lang"><option value="rust">rust</option><option value="python">python</option></select>
+    <button id="pg-run">run</button><button id="pg-close">close</button> <span class="keys">ctrl/⌘+enter runs</span>
+  </div>
+  <textarea id="pg-code"></textarea>
+  <pre id="pg-out" class="out" hidden></pre>
+</dialog>
+
+<script>
+const track = new URLSearchParams(location.search).get("track") || "";
+const feed = document.getElementById("feed");
+// GitHub Pages has no backend: Rust goes to the public Rust Playground, Python runs in-browser via Pyodide.
+const ON_PAGES = location.hostname.endsWith("github.io");
+
+for (const a of document.querySelectorAll("header a"))
+  if ((new URLSearchParams(a.search).get("track") || "") === track) a.className = "on";
+
+function store(key, val) {  // per-browser draft saving; harmless if storage is blocked
+  try { return val === undefined ? localStorage.getItem(key) : localStorage.setItem(key, val); } catch { return null; }
+}
+
+function el(tag, props, ...kids) {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...kids);
+  return e;
+}
+
+function codeEditor(textarea, lang, key, onRun) {
+  const cm = CodeMirror.fromTextArea(textarea, {
+    mode: lang, lineNumbers: true, indentUnit: 4, matchBrackets: true, autoCloseBrackets: true,
+    extraKeys: { "Ctrl-Enter": onRun, "Cmd-Enter": onRun,
+                 Tab: c => c.somethingSelected() ? c.execCommand("indentMore") : c.replaceSelection("    ") } });
+  cm.on("change", () => store(typeof key === "function" ? key() : key, cm.getValue()));
+  return cm;
+}
+
+// ---- runners ----
+let harness, pyWorker;
+const PY_WORKER_SRC = `
+  importScripts("https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js");
+  const ready = loadPyodide();
+  onmessage = async e => {
+    const py = await ready;
+    let out = "", ok = true;
+    py.setStdout({ batched: s => out += s + "\\n" });
+    py.setStderr({ batched: s => out += s + "\\n" });
+    try { py.runPython(e.data, { globals: py.globals.get("dict")() }); }
+    catch (err) { const m = String(err.message); if (!/SystemExit: 0/.test(m)) { ok = false; if (!/SystemExit/.test(m)) out += m; } }
+    postMessage({ ok, output: out });
+  };`;
+
+async function runPyodide(src) {
+  pyWorker ||= new Worker(URL.createObjectURL(new Blob([PY_WORKER_SRC], { type: "text/javascript" })));
+  const w = pyWorker;
+  return new Promise(resolve => {
+    // generous: the first run also downloads Python (~10MB)
+    const timer = setTimeout(() => { w.terminate(); pyWorker = null; resolve({ ok: false, output: "[killed: 60s time limit]" }); }, 60000);
+    w.onmessage = e => { clearTimeout(timer); resolve(e.data); };
+    w.postMessage(src);
+  });
+}
+
+async function execute({ id, lang, code, tests }) {
+  if (!ON_PAGES) {
+    const r = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify(id ? { id, code } : { lang, code }) });
+    return r.json();
+  }
+  if (lang === "rust") {
+    const r = await fetch("https://play.rust-lang.org/execute", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channel: "stable", mode: "debug", edition: "2021", crateType: "bin", backtrace: false,
+                             tests: !!tests, code: tests ? code + "\n\n" + tests : code }) });
+    const j = await r.json();
+    if (j.error) return { ok: false, output: j.error };
+    return { ok: j.success, output: j.success ? j.stdout : j.stderr + "\n" + j.stdout };
+  }
+  if (tests) harness ||= await (await fetch("harness.py")).text();
+  return runPyodide(tests ? code + "\n\n" + tests + "\n" + harness : code);
+}
+
+async function run(btn, out, job) {
+  btn.disabled = true; out.hidden = false; out.className = "out";
+  out.textContent = ON_PAGES && job.lang === "python" && !pyWorker ? "loading python (first run only)..." : "running...";
+  try {
+    const j = await execute(job);
+    out.textContent = j.output || j.error || "(no output)";
+    out.className = "out " + (j.ok ? "ok" : "bad");
+    out.scrollTop = out.scrollHeight;  // the verdict is at the end, after compiler warnings
+  } catch (e) { out.textContent = "network error: " + e; }
+  btn.disabled = false;
+}
+
+// ---- feed ----
+// editors are created lazily as cards come near the screen, so an endless feed stays light
+const lazy = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting && e.target.init) { e.target.init(); e.target.init = null; }
+}), { root: feed, rootMargin: "100% 0px" });
+
+function card(p, n) {
+  const left = el("div", {},
+    el("div", {}, `#${n} `, el("span", { className: "tag" }, p.track), el("span", { className: "tag" }, p.difficulty)),
+    el("h2", { textContent: p.title }),
+    el("pre", { textContent: p.prompt }));
+  const right = el("div", {});
+  const sec = el("section", { className: "card" }, el("div", { className: "wrap" }, left, right));
+  const key = "loop:" + p.id;
+  const ta = el("textarea", { spellcheck: false, value: store(key) || p.starter || "" });
+  if (p.lang) {
+    let cm = null;
+    const out = el("pre", { className: "out", hidden: true });
+    const go = el("button", { textContent: "run tests" });
+    go.onclick = () => run(go, out, { id: p.id, lang: p.lang, code: cm ? cm.getValue() : ta.value, tests: p.tests });
+    const reset = el("button", { textContent: "reset", onclick: () => {
+      if (!confirm("Discard your code?")) return;
+      cm ? cm.setValue(p.starter) : (ta.value = p.starter);
+      store(key, p.starter);
+    } });
+    right.append(el("div", {}, `[${p.lang}] `, el("span", { className: "keys", textContent: "ctrl/⌘+enter runs tests" })),
+                 ta, go, reset, out,
+                 el("details", {}, el("summary", {}, "show tests"), el("pre", { textContent: p.tests })));
+    sec.init = () => { cm = codeEditor(ta, p.lang, key, () => go.click()); };
+    lazy.observe(sec);
+  } else {
+    ta.placeholder = "scratchpad: sketch your design here (saved in this browser)";
+    ta.oninput = () => store(key, ta.value);
+    right.append(ta, el("details", {}, el("summary", {}, "reveal reference answer"), el("pre", { textContent: p.notes })));
+  }
+  right.append(el("div", { className: "hint", textContent: "swipe up for the next one" }));
+  return sec;
+}
+
+let pool = [], deck = [], n = 0;
+function load() {
+  for (let i = 0; i < 5 && pool.length; i++) {
+    if (!deck.length) {  // endless: reshuffle the deck every lap
+      deck = pool.slice();
+      for (let j = deck.length - 1; j > 0; j--) { const k = Math.random() * (j + 1) | 0; [deck[j], deck[k]] = [deck[k], deck[j]]; }
+    }
+    feed.append(card(deck.pop(), ++n));
+  }
+}
+// keep ~3 screens of problems ahead of the reader
+feed.onscroll = () => { if (feed.scrollTop + 4 * feed.clientHeight > feed.scrollHeight) load(); };
+fetch("problems.json").then(r => r.json()).then(all => {
+  pool = all.filter(p => !track || p.track === track);
+  load();
+}).catch(() => feed.textContent = "could not load problems.");
+
+// ---- playground ----
+const pg = document.getElementById("pg"), pgLang = document.getElementById("pg-lang");
+const pgOut = document.getElementById("pg-out"), pgRun = document.getElementById("pg-run");
+const samples = { rust: 'fn main() {\n    println!("hello from loop {{}}");\n}\n',
+                  python: 'print("hello from loop {}")\n' };
+let pgCm = null;
+const showPg = () => {
+  pgCm.setOption("mode", pgLang.value);
+  pgCm.setValue(store("pg:" + pgLang.value) || samples[pgLang.value]);
+};
+pgLang.onchange = showPg;
+pgRun.onclick = () => run(pgRun, pgOut, { lang: pgLang.value, code: pgCm.getValue() });
+document.getElementById("pg-open").onclick = () => {
+  pg.showModal();
+  if (!pgCm) {
+    pgCm = codeEditor(document.getElementById("pg-code"), pgLang.value, () => "pg:" + pgLang.value, () => pgRun.click());
+    showPg();
+  }
+  pgCm.refresh();
+};
+document.getElementById("pg-close").onclick = () => pg.close();
+</script>
+</body>
+</html>

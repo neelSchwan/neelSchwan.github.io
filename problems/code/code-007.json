@@ -1,0 +1,10 @@
+{
+  "id": "code-007",
+  "track": "code",
+  "title": "Reverse a Linked List",
+  "difficulty": "easy",
+  "lang": "python",
+  "prompt": "You are given the head of a singly linked list built from ListNode objects (each has a val and a next). Reverse the list in place and return the new head. An empty list is represented by None.\n\nExample:\n  1 -> 2 -> 3 -> None   becomes   3 -> 2 -> 1 -> None",
+  "starter": "class ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val\n        self.next = next\n\ndef reverse_list(head):\n    # your code here\n    pass\n",
+  "tests": "def _build(vals):\n    head = None\n    for v in reversed(vals):\n        head = ListNode(v, head)\n    return head\n\ndef _to_list(node):\n    out = []\n    while node is not None and len(out) < 10000:\n        out.append(node.val)\n        node = node.next\n    return out\n\ndef test_basic():\n    assert _to_list(reverse_list(_build([1, 2, 3]))) == [3, 2, 1]\n\ndef test_two_nodes():\n    assert _to_list(reverse_list(_build([7, 8]))) == [8, 7]\n\ndef test_single_and_empty():\n    assert _to_list(reverse_list(_build([5]))) == [5]\n    assert reverse_list(None) is None\n\ndef test_in_place():\n    head = _build([1, 2, 3, 4])\n    tail = head.next.next.next\n    new_head = reverse_list(head)\n    assert new_head is tail\n    assert head.next is None\n"
+}
