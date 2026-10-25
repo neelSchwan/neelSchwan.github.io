@@ -11,19 +11,43 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap">
+<script>
+  // pick theme before first paint: saved choice, else the OS setting
+  try { document.documentElement.dataset.theme = localStorage.getItem("loop:theme") ||
+        (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch {}
+</script>
 <style>
-  * { box-sizing: border-box; }
+  :root { --bg: #f4ecd8; --fg: #222; --card: #fffaf0; --muted: #776; --link: #1a3cb0; --line: #222;
+          --btn: #e0d6bc; --gutter: #efe6cc; --head: #8a3b00; --code-bg: #ebdfc0; --code-fg: #5a2a00; --mark: #1a3cb0; }
+  :root[data-theme="dark"] { --bg: #15130f; --fg: #e6dcc4; --card: #1d1a15; --muted: #8f8570; --link: #ffb000;
+          --line: #6b6150; --btn: #2a251c; --gutter: #201d17; --head: #ffb000; --code-bg: #2e2818; --code-fg: #ffd27a;
+          --mark: #7fc4ff; color-scheme: dark; }
+  * { box-sizing: border-box; scrollbar-color: var(--line) transparent; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
-  body { background: #f4ecd8; color: #222; font: 15px/1.5 "Courier New", Courier, monospace; }
+  body { background: var(--bg); color: var(--fg); font: 15px/1.5 "IBM Plex Mono", "Courier New", monospace; }
   header { height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 12px;
-           border-bottom: 3px double #222; white-space: nowrap; overflow-x: auto; }
+           border-bottom: 3px double var(--line); white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+  header button { margin: 0; }
+  #theme { font: 16px/1 system-ui, sans-serif; padding: 4px 8px; }
+  @media (max-width: 520px) {
+    header { gap: 6px; font-size: 13px; padding: 0 8px; } header b { font-size: 17px; }
+    header button { padding: 2px 8px; } .wide { display: none; }
+  }
   header b { font-size: 20px; letter-spacing: 1px; }
-  a { color: #1a3cb0; }
-  a.on { color: #222; font-weight: bold; text-decoration: none; }
+  a { color: var(--link); }
+  a.on { color: var(--fg); font-weight: bold; text-decoration: none; }
+  /* problem text highlights */
+  .txt { white-space: pre-wrap; word-wrap: break-word; line-height: 1.65; margin: 8px 0; }
+  .txt .h { color: var(--head); font-weight: 600; }
+  .txt code, .txt .ex { font-family: inherit; background: var(--code-bg); color: var(--code-fg); padding: 0 3px; }
+  .txt .ex { display: inline-block; padding: 0 6px; }
+  .txt .b { color: var(--mark); font-weight: 600; }
   /* tiktok-style: one problem per screen, snap to each */
   #feed { height: calc(100dvh - 44px); overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
   .card { height: 100%; scroll-snap-align: start; scroll-snap-stop: always; overflow-y: auto;
-          border-bottom: 1px dashed #222; padding: 16px 12px 40px; }
+          border-bottom: 1px dashed var(--line); padding: 16px 12px 40px; }
   .wrap { max-width: 760px; margin: 0 auto; }
   /* leetcode-style split on wide screens: problem left, code right */
   @media (min-width: 1000px) {
@@ -33,31 +57,42 @@
     .wrap .CodeMirror { height: 55vh; }
   }
   .card h2 { font-size: 18px; margin: 4px 0 8px; }
-  .tag { border: 1px solid #222; padding: 0 4px; font-size: 12px; margin-right: 4px; text-transform: uppercase; }
-  .hint { color: #776; font-size: 12px; text-align: center; margin-top: 16px; }
+  .tag { border: 1px solid var(--line); padding: 0 4px; font-size: 12px; margin-right: 4px; text-transform: uppercase; }
+  .hint { color: var(--muted); font-size: 12px; text-align: center; margin-top: 16px; }
   pre { white-space: pre-wrap; word-wrap: break-word; margin: 8px 0; }
-  pre.out { background: #222; color: #e8e8d0; padding: 8px; max-height: 300px; overflow: auto; }
+  pre.out { background: #111; color: #e8e8d0; border: 1px solid var(--line); padding: 8px; max-height: 300px; overflow: auto; }
   pre.out.ok { color: #9f9; } pre.out.bad { color: #f99; }
-  textarea { width: 100%; min-height: 220px; font: 13px/1.4 "Courier New", monospace; background: #fffaf0;
-             color: #222; border: 1px solid #222; padding: 6px; }
-  .CodeMirror { height: 320px; font: 13px/1.4 "Courier New", monospace; border: 1px solid #222; background: #fffaf0; }
-  .CodeMirror-gutters { background: #efe6cc; border-right: 1px solid #222; }
-  .CodeMirror-matchingbracket { background: #e0d6bc; }
-  button, select { font: inherit; background: #e0d6bc; color: #222; border: 1px solid #222;
-                   box-shadow: 2px 2px 0 #222; padding: 4px 12px; margin: 6px 6px 0 0; cursor: pointer; }
+  textarea { width: 100%; min-height: 220px; font: 13px/1.5 "IBM Plex Mono", monospace; background: var(--card);
+             color: var(--fg); border: 1px solid var(--line); padding: 6px; }
+  .CodeMirror { height: 320px; font: 13px/1.5 "IBM Plex Mono", monospace; border: 1px solid var(--line);
+                background: var(--card); color: var(--fg); }
+  .CodeMirror-gutters { background: var(--gutter); border-right: 1px solid var(--line); }
+  .CodeMirror-linenumber { color: var(--muted); }
+  .CodeMirror-cursor { border-left-color: var(--fg); }
+  .CodeMirror-matchingbracket { background: var(--btn); }
+  /* dark syntax colors (default CodeMirror palette is tuned for light) */
+  [data-theme="dark"] .CodeMirror-selected { background: #3a3122 !important; }
+  [data-theme="dark"] .cm-keyword { color: #ffb86b; } [data-theme="dark"] .cm-def { color: #8fd3ff; }
+  [data-theme="dark"] .cm-variable-2, [data-theme="dark"] .cm-variable-3, [data-theme="dark"] .cm-type { color: #9ad0c2; }
+  [data-theme="dark"] .cm-string { color: #b5e48c; } [data-theme="dark"] .cm-comment { color: #8a8170; }
+  [data-theme="dark"] .cm-number, [data-theme="dark"] .cm-atom { color: #f4a3a3; }
+  [data-theme="dark"] .cm-builtin, [data-theme="dark"] .cm-meta { color: #c4a7ff; }
+  button, select { font: inherit; background: var(--btn); color: var(--fg); border: 1px solid var(--line);
+                   box-shadow: 2px 2px 0 var(--line); padding: 4px 12px; margin: 6px 6px 0 0; cursor: pointer; }
   button:active { box-shadow: none; transform: translate(2px, 2px); }
   button:disabled { opacity: .5; }
-  .keys { color: #776; font-size: 12px; }
+  .keys { color: var(--muted); font-size: 12px; }
   dialog { width: min(900px, 100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0 auto;
-           border: 0; padding: 12px; background: #f4ecd8; color: #222; }
+           border: 0; padding: 12px; background: var(--bg); color: var(--fg); }
   dialog .CodeMirror { height: 55dvh; }
 </style>
 </head>
 <body>
 <header>
   <b>loop {}</b>
-  <a href="?">all</a><a href="?track=rust">rust</a><a href="?track=code">coding</a><a href="?track=design">design</a>
-  <button id="pg-open" style="margin:0">playground</button>
+  <a href="?">all</a><a href="?track=rust">rust</a><a href="?track=code">code</a><a href="?track=design">design</a>
+  <button id="pg-open">play<span class="wide">ground</span></button>
+  <button id="theme" aria-label="toggle dark mode" title="toggle dark mode">&#9680;</button>
 </header>
 <main id="feed"></main>
 
@@ -82,6 +117,37 @@ for (const a of document.querySelectorAll("header a"))
 
 function store(key, val) {  // per-browser draft saving; harmless if storage is blocked
   try { return val === undefined ? localStorage.getItem(key) : localStorage.setItem(key, val); } catch { return null; }
+}
+
+const themeBtn = document.getElementById("theme");
+themeBtn.onclick = () => {
+  const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = t;
+  store("loop:theme", t);
+};
+
+// ---- problem text highlighting: headings, labels, examples, inline code ----
+const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+// `code` | name(args) | path::to<T> | Type<...> | snake_case | operators
+const INLINE = /`([^`\n]+)`|(?:[A-Za-z_]\w*\.)*[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*(?:<[^\s<>()]*>)?\((?:[^()\n]|\([^()\n]*\))*\)|[A-Za-z_]\w*(?:::[A-Za-z_]\w*)+|\b[A-Z]\w*<[^<>\n]*(?:<[^<>\n]*>[^<>\n]*)*>|\b[a-z]+(?:_[a-z0-9]+)+\b|->|<=|>=|==|!=/g;
+function inline(s) {
+  let out = "", last = 0;
+  for (const m of s.matchAll(INLINE)) {
+    out += esc(s.slice(last, m.index)) + `<code>${esc(m[1] ?? m[0])}</code>`;
+    last = m.index + m[0].length;
+  }
+  return out + esc(s.slice(last));
+}
+function fmt(text) {
+  return (text || "").split("\n").map(line => {
+    let m;
+    if (/^ {2,}\S/.test(line)) return `<span class="ex">${esc(line)}</span>`;          // indented example
+    if (/^[A-Z][A-Z0-9 &\/(),'-]{2,}:?$/.test(line)) return `<span class="h">${esc(line)}</span>`;  // CAPS heading
+    if ((m = line.match(/^([A-Z][\w \/&()'-]{0,30}:)(?!:)(.*)$/))) return `<span class="h">${esc(m[1])}</span>${inline(m[2])}`;
+    if ((m = line.match(/^(- |\d+[.)] )(?:([A-Z][\w \/&()'-]{0,30}:)(?=\s))?(.*)$/)))       // bullet, optional "Label:"
+      return `<span class="b">${esc(m[1])}</span>${m[2] ? `<b>${esc(m[2])}</b>` : ""}${inline(m[3])}`;
+    return inline(line);
+  }).join("\n");
 }
 
 function el(tag, props, ...kids) {
@@ -165,7 +231,7 @@ function card(p, n) {
   const left = el("div", {},
     el("div", {}, `#${n} `, el("span", { className: "tag" }, p.track), el("span", { className: "tag" }, p.difficulty)),
     el("h2", { textContent: p.title }),
-    el("pre", { textContent: p.prompt }));
+    el("div", { className: "txt", innerHTML: fmt(p.prompt) }));
   const right = el("div", {});
   const sec = el("section", { className: "card" }, el("div", { className: "wrap" }, left, right));
   const key = "loop:" + p.id;
@@ -188,7 +254,7 @@ function card(p, n) {
   } else {
     ta.placeholder = "scratchpad: sketch your design here (saved in this browser)";
     ta.oninput = () => store(key, ta.value);
-    right.append(ta, el("details", {}, el("summary", {}, "reveal reference answer"), el("pre", { textContent: p.notes })));
+    right.append(ta, el("details", {}, el("summary", {}, "reveal reference answer"), el("div", { className: "txt", innerHTML: fmt(p.notes) })));
   }
   right.append(el("div", { className: "hint", textContent: "swipe up for the next one" }));
   return sec;
