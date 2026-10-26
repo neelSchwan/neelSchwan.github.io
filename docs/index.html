@@ -8,7 +8,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -99,7 +98,6 @@
 <dialog id="pg">
   <b>playground</b> &mdash; free run, no tests
   <div>
-    <select id="pg-lang"><option value="rust">rust</option><option value="python">python</option></select>
     <button id="pg-run">run</button><button id="pg-close">close</button> <span class="keys">ctrl/⌘+enter runs</span>
   </div>
   <textarea id="pg-code"></textarea>
@@ -109,7 +107,7 @@
 <script>
 const track = new URLSearchParams(location.search).get("track") || "";
 const feed = document.getElementById("feed");
-// GitHub Pages has no backend: Rust goes to the public Rust Playground, Python runs in-browser via Pyodide.
+// GitHub Pages has no backend: code runs on the public Rust Playground instead.
 const ON_PAGES = location.hostname.endsWith("github.io");
 
 for (const a of document.querySelectorAll("header a"))
@@ -156,62 +154,33 @@ function el(tag, props, ...kids) {
   return e;
 }
 
-function codeEditor(textarea, lang, key, onRun) {
+function codeEditor(textarea, key, onRun) {
   const cm = CodeMirror.fromTextArea(textarea, {
-    mode: lang, lineNumbers: true, indentUnit: 4, matchBrackets: true, autoCloseBrackets: true,
+    mode: "rust", lineNumbers: true, indentUnit: 4, matchBrackets: true, autoCloseBrackets: true,
     extraKeys: { "Ctrl-Enter": onRun, "Cmd-Enter": onRun,
                  Tab: c => c.somethingSelected() ? c.execCommand("indentMore") : c.replaceSelection("    ") } });
   cm.on("change", () => store(typeof key === "function" ? key() : key, cm.getValue()));
   return cm;
 }
 
-// ---- runners ----
-let harness, pyWorker;
-const PY_WORKER_SRC = `
-  importScripts("https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js");
-  const ready = loadPyodide();
-  onmessage = async e => {
-    const py = await ready;
-    let out = "", ok = true;
-    py.setStdout({ batched: s => out += s + "\\n" });
-    py.setStderr({ batched: s => out += s + "\\n" });
-    try { py.runPython(e.data, { globals: py.globals.get("dict")() }); }
-    catch (err) { const m = String(err.message); if (!/SystemExit: 0/.test(m)) { ok = false; if (!/SystemExit/.test(m)) out += m; } }
-    postMessage({ ok, output: out });
-  };`;
-
-async function runPyodide(src) {
-  pyWorker ||= new Worker(URL.createObjectURL(new Blob([PY_WORKER_SRC], { type: "text/javascript" })));
-  const w = pyWorker;
-  return new Promise(resolve => {
-    // generous: the first run also downloads Python (~10MB)
-    const timer = setTimeout(() => { w.terminate(); pyWorker = null; resolve({ ok: false, output: "[killed: 60s time limit]" }); }, 60000);
-    w.onmessage = e => { clearTimeout(timer); resolve(e.data); };
-    w.postMessage(src);
-  });
-}
-
-async function execute({ id, lang, code, tests }) {
+// ---- runner ----
+async function execute({ id, code, tests }) {
   if (!ON_PAGES) {
     const r = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify(id ? { id, code } : { lang, code }) });
+                                        body: JSON.stringify({ id, code }) });
     return r.json();
   }
-  if (lang === "rust") {
-    const r = await fetch("https://play.rust-lang.org/execute", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ channel: "stable", mode: "debug", edition: "2021", crateType: "bin", backtrace: false,
-                             tests: !!tests, code: tests ? code + "\n\n" + tests : code }) });
-    const j = await r.json();
-    if (j.error) return { ok: false, output: j.error };
-    return { ok: j.success, output: j.success ? j.stdout : j.stderr + "\n" + j.stdout };
-  }
-  if (tests) harness ||= await (await fetch("harness.py")).text();
-  return runPyodide(tests ? code + "\n\n" + tests + "\n" + harness : code);
+  const r = await fetch("https://play.rust-lang.org/execute", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ channel: "stable", mode: "debug", edition: "2021", crateType: "bin", backtrace: false,
+                           tests: !!tests, code: tests ? "#![allow(dead_code)]\n" + code + "\n\n" + tests : code }) });
+  const j = await r.json();
+  if (j.error) return { ok: false, output: j.error };
+  return { ok: j.success, output: j.success ? j.stdout : j.stderr + "\n" + j.stdout };
 }
 
 async function run(btn, out, job) {
   btn.disabled = true; out.hidden = false; out.className = "out";
-  out.textContent = ON_PAGES && job.lang === "python" && !pyWorker ? "loading python (first run only)..." : "running...";
+  out.textContent = "running...";
   try {
     const j = await execute(job);
     out.textContent = j.output || j.error || "(no output)";
@@ -240,16 +209,16 @@ function card(p, n) {
     let cm = null;
     const out = el("pre", { className: "out", hidden: true });
     const go = el("button", { textContent: "run tests" });
-    go.onclick = () => run(go, out, { id: p.id, lang: p.lang, code: cm ? cm.getValue() : ta.value, tests: p.tests });
+    go.onclick = () => run(go, out, { id: p.id, code: cm ? cm.getValue() : ta.value, tests: p.tests });
     const reset = el("button", { textContent: "reset", onclick: () => {
       if (!confirm("Discard your code?")) return;
       cm ? cm.setValue(p.starter) : (ta.value = p.starter);
       store(key, p.starter);
     } });
-    right.append(el("div", {}, `[${p.lang}] `, el("span", { className: "keys", textContent: "ctrl/⌘+enter runs tests" })),
+    right.append(el("div", {}, el("span", { className: "keys", textContent: "ctrl/⌘+enter runs tests" })),
                  ta, go, reset, out,
                  el("details", {}, el("summary", {}, "show tests"), el("pre", { textContent: p.tests })));
-    sec.init = () => { cm = codeEditor(ta, p.lang, key, () => go.click()); };
+    sec.init = () => { cm = codeEditor(ta, key, () => go.click()); };
     lazy.observe(sec);
   } else {
     ta.placeholder = "scratchpad: sketch your design here (saved in this browser)";
@@ -278,22 +247,15 @@ fetch("problems.json").then(r => r.json()).then(all => {
 }).catch(() => feed.textContent = "could not load problems.");
 
 // ---- playground ----
-const pg = document.getElementById("pg"), pgLang = document.getElementById("pg-lang");
+const pg = document.getElementById("pg");
 const pgOut = document.getElementById("pg-out"), pgRun = document.getElementById("pg-run");
-const samples = { rust: 'fn main() {\n    println!("hello from loop {{}}");\n}\n',
-                  python: 'print("hello from loop {}")\n' };
 let pgCm = null;
-const showPg = () => {
-  pgCm.setOption("mode", pgLang.value);
-  pgCm.setValue(store("pg:" + pgLang.value) || samples[pgLang.value]);
-};
-pgLang.onchange = showPg;
-pgRun.onclick = () => run(pgRun, pgOut, { lang: pgLang.value, code: pgCm.getValue() });
+pgRun.onclick = () => run(pgRun, pgOut, { code: pgCm.getValue() });
 document.getElementById("pg-open").onclick = () => {
   pg.showModal();
   if (!pgCm) {
-    pgCm = codeEditor(document.getElementById("pg-code"), pgLang.value, () => "pg:" + pgLang.value, () => pgRun.click());
-    showPg();
+    pgCm = codeEditor(document.getElementById("pg-code"), "pg:rust", () => pgRun.click());
+    pgCm.setValue(store("pg:rust") || 'fn main() {\n    println!("hello from loop {{}}");\n}\n');
   }
   pgCm.refresh();
 };

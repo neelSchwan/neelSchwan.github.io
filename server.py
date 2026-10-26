@@ -13,25 +13,18 @@ RUN_SLOTS = threading.BoundedSemaphore(4)
 
 PROBLEMS = {p["id"]: p for p in json.load(open(os.path.join(ROOT, "docs", "problems.json")))}
 STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
-          "/problems.json": ("problems.json", "application/json"),
-          "/harness.py": ("harness.py", "text/plain; charset=utf-8")}
-
-PY_HARNESS = open(os.path.join(ROOT, "docs", "harness.py")).read()
+          "/problems.json": ("problems.json", "application/json")}
 
 RUSTC = ("rustc --edition 2021 --target x86_64-unknown-linux-musl "
          "-C linker=rust-lld -C linker-flavor=ld.lld -o t main.rs && ./t")
 
 
-def run_sandboxed(lang, code, tests=None):
+def run_sandboxed(code, tests=None):
     """tests=None is playground mode: just run the program."""
     with tempfile.TemporaryDirectory(prefix="loop-") as work:
-        if lang == "rust":
-            open(os.path.join(work, "main.rs"), "w").write(code if tests is None else code + "\n\n" + tests)
-            cmd = RUSTC if tests is None else RUSTC.replace("rustc ", "rustc --test ", 1)
-        else:
-            open(os.path.join(work, "main.py"), "w").write(
-                code if tests is None else code + "\n\n" + tests + "\n" + PY_HARNESS)
-            cmd = "python3 -I main.py"
+        src = code if tests is None else "#![allow(dead_code)]\n" + code + "\n\n" + tests
+        open(os.path.join(work, "main.rs"), "w").write(src)
+        cmd = RUSTC if tests is None else RUSTC.replace("rustc ", "rustc --test ", 1)
         # No network, no home dir, only /usr + toolchain visible; cgroup caps memory/tasks/cpu.
         argv = [
             "systemd-run", "--user", "--scope", "--quiet",
@@ -82,19 +75,15 @@ class Handler(BaseHTTPRequestHandler):
         try:
             req = json.loads(self.rfile.read(length))
             code = str(req["code"])
-            if req.get("id"):
-                prob = PROBLEMS[req["id"]]
-                lang, tests = prob["lang"], prob.get("tests")
-            else:
-                lang, tests = req["lang"], None  # playground
+            tests = PROBLEMS[req["id"]].get("tests") if req.get("id") else None  # no id: playground
         except (ValueError, KeyError, TypeError):
             return self.send(400, {"error": "bad request"})
-        if lang not in ("rust", "python"):
+        if req.get("id") and not tests:
             return self.send(400, {"error": "nothing to run for this problem"})
         if not RUN_SLOTS.acquire(timeout=30):
             return self.send(503, {"ok": False, "output": "server busy, try again"})
         try:
-            ok, out = run_sandboxed(lang, code, tests)
+            ok, out = run_sandboxed(code, tests)
         finally:
             RUN_SLOTS.release()
         self.send(200, {"ok": ok, "output": out})
