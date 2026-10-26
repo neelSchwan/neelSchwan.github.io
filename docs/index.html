@@ -215,10 +215,39 @@ function card(p, n) {
       cm ? cm.setValue(p.starter) : (ta.value = p.starter);
       store(key, p.starter);
     } });
-    right.append(el("div", {}, el("span", { className: "keys", textContent: "ctrl/⌘+enter runs tests" })),
-                 ta, go, reset, out,
-                 el("details", {}, el("summary", {}, "show tests"), el("pre", { textContent: p.tests })));
+    const status = el("span", { className: "keys" });
+    const head = el("div", {}, el("span", { className: "keys", textContent: `${p.id} · ctrl/⌘+enter runs tests ` }), status);
+    right.append(head, ta, go, reset);
     sec.init = () => { cm = codeEditor(ta, key, () => go.click()); };
+    if (!ON_PAGES) {
+      // server copy of the site: code lives in ~/loop-work/<id>/src/solution.rs, shared with zed and the cli
+      const save = code => fetch(`/api/workspace/${p.id}`, { method: "POST", body: JSON.stringify({ code }) })
+        .then(r => r.json());
+      let timer, loading = false;
+      sec.init = () => {
+        cm = codeEditor(ta, key, () => go.click());
+        loading = true;
+        fetch(`/api/workspace/${p.id}`).then(r => r.json()).then(j => {
+          if (j.saved && j.files["src/solution.rs"] !== cm.getValue()) cm.setValue(j.files["src/solution.rs"]);
+          if (j.saved) status.textContent = "· synced";
+        }).finally(() => loading = false);
+        cm.on("change", () => {
+          if (loading) return;
+          status.textContent = "· saving...";
+          clearTimeout(timer);
+          timer = setTimeout(() => save(cm.getValue())
+            .then(() => status.textContent = "· synced")
+            .catch(() => status.textContent = "· not synced (saved in browser)"), 800);
+        });
+      };
+      const zed = el("button", { textContent: "open in zed", onclick: async () => {
+        const j = await save(cm ? cm.getValue() : ta.value);
+        status.textContent = "· synced";
+        location.href = `zed://ssh/${j.user}@${location.hostname}${j.path}`;
+      } });
+      right.append(zed);
+    }
+    right.append(out, el("details", {}, el("summary", {}, "show tests"), el("pre", { textContent: p.tests })));
     lazy.observe(sec);
   } else {
     ta.placeholder = "scratchpad: sketch your design here (saved in this browser)";
