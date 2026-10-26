@@ -3,8 +3,8 @@
   "track": "code",
   "title": "Edit Distance",
   "difficulty": "hard",
-  "lang": "python",
-  "prompt": "Given two strings a and b, return the minimum number of single-character edits needed to turn a into b. The allowed edits are: insert one character, delete one character, or replace one character with another.\n\nExample:\n  edit_distance(\"kitten\", \"sitting\") -> 3\n  edit_distance(\"\", \"abc\") -> 3",
-  "starter": "def edit_distance(a, b):\n    # your code here\n    pass\n",
-  "tests": "def test_classic():\n    assert edit_distance(\"kitten\", \"sitting\") == 3\n\ndef test_empty():\n    assert edit_distance(\"\", \"abc\") == 3\n    assert edit_distance(\"abc\", \"\") == 3\n    assert edit_distance(\"\", \"\") == 0\n\ndef test_identical():\n    assert edit_distance(\"same\", \"same\") == 0\n\ndef test_mixed():\n    assert edit_distance(\"intention\", \"execution\") == 5\n    assert edit_distance(\"abc\", \"yabd\") == 2\n\ndef test_medium_size():\n    a = \"ab\" * 150\n    b = \"ba\" * 150\n    assert edit_distance(a, b) == 2\n"
+  "lang": "rust",
+  "prompt": "Given two strings `a` and `b`, return the minimum number of single-character edits needed to turn a into b. The allowed edits are: insert one character, delete one character, or replace one character with another. Treat the strings as sequences of chars.\n\nSignature: `fn edit_distance(a: &str, b: &str) -> usize`\n\nExample:\n  edit_distance(\"kitten\", \"sitting\") -> 3\n  edit_distance(\"\", \"abc\") -> 3",
+  "starter": "pub fn edit_distance(a: &str, b: &str) -> usize {\n    todo!()\n}\n",
+  "tests": "#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn classic() {\n        assert_eq!(edit_distance(\"kitten\", \"sitting\"), 3);\n    }\n\n    #[test]\n    fn empty() {\n        assert_eq!(edit_distance(\"\", \"abc\"), 3);\n        assert_eq!(edit_distance(\"abc\", \"\"), 3);\n        assert_eq!(edit_distance(\"\", \"\"), 0);\n    }\n\n    #[test]\n    fn identical() {\n        assert_eq!(edit_distance(\"same\", \"same\"), 0);\n    }\n\n    #[test]\n    fn mixed() {\n        assert_eq!(edit_distance(\"intention\", \"execution\"), 5);\n        assert_eq!(edit_distance(\"abc\", \"yabd\"), 2);\n    }\n\n    #[test]\n    fn medium_size() {\n        let a = \"ab\".repeat(150);\n        let b = \"ba\".repeat(150);\n        assert_eq!(edit_distance(&a, &b), 2);\n    }\n}"
 }

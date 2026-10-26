@@ -3,8 +3,8 @@
   "track": "code",
   "title": "Pair Sum Indices",
   "difficulty": "easy",
-  "lang": "python",
-  "prompt": "You are given a list of integers nums and an integer target. Exactly one pair of distinct positions i < j satisfies nums[i] + nums[j] == target. Return that pair as a list [i, j] with i < j.\n\nYou may not use the same position twice. Aim for a single pass over the list.\n\nExample:\n  pair_sum_indices([4, 9, 1, 6], 7) -> [2, 3]   (1 + 6 = 7)",
-  "starter": "def pair_sum_indices(nums, target):\n    # your code here\n    pass\n",
-  "tests": "def test_basic():\n    assert pair_sum_indices([4, 9, 1, 6], 7) == [2, 3]\n\ndef test_first_and_last():\n    assert pair_sum_indices([5, 1, 2, 8], 13) == [0, 3]\n\ndef test_duplicates():\n    assert pair_sum_indices([3, 3], 6) == [0, 1]\n\ndef test_negatives():\n    assert pair_sum_indices([-4, 10, 2, -7], -11) == [0, 3]\n\ndef test_zero_target():\n    assert pair_sum_indices([0, 5, -5, 9], 0) == [1, 2]\n"
+  "lang": "rust",
+  "prompt": "You are given a slice of integers `nums` and an integer `target`. Exactly one pair of distinct positions i < j satisfies nums[i] + nums[j] == target. Return that pair as a tuple `(i, j)` with i < j.\n\nSignature: `fn pair_sum_indices(nums: &[i32], target: i32) -> (usize, usize)`\n\nYou may not use the same position twice. Aim for a single pass over the slice (a HashMap helps).\n\nExample:\n  pair_sum_indices(&[4, 9, 1, 6], 7) -> (2, 3)   (1 + 6 = 7)",
+  "starter": "pub fn pair_sum_indices(nums: &[i32], target: i32) -> (usize, usize) {\n    todo!()\n}\n",
+  "tests": "#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn basic() {\n        assert_eq!(pair_sum_indices(&[4, 9, 1, 6], 7), (2, 3));\n    }\n\n    #[test]\n    fn first_and_last() {\n        assert_eq!(pair_sum_indices(&[5, 1, 2, 8], 13), (0, 3));\n    }\n\n    #[test]\n    fn duplicates() {\n        assert_eq!(pair_sum_indices(&[3, 3], 6), (0, 1));\n    }\n\n    #[test]\n    fn negatives() {\n        assert_eq!(pair_sum_indices(&[-4, 10, 2, -7], -11), (0, 3));\n    }\n\n    #[test]\n    fn zero_target() {\n        assert_eq!(pair_sum_indices(&[0, 5, -5, 9], 0), (1, 2));\n    }\n}"
 }

@@ -3,8 +3,8 @@
   "track": "code",
   "title": "Balanced Brackets",
   "difficulty": "easy",
-  "lang": "python",
-  "prompt": "Given a string s made only of the characters ( ) [ ] { }, decide whether the brackets are balanced. A string is balanced when every opening bracket is closed by the same kind of bracket, and brackets close in the reverse order they were opened. The empty string is balanced.\n\nReturn True or False.\n\nExample:\n  is_balanced(\"{[()]}()\") -> True\n  is_balanced(\"([)]\") -> False",
-  "starter": "def is_balanced(s):\n    # your code here\n    pass\n",
-  "tests": "def test_balanced():\n    assert is_balanced(\"{[()]}()\") is True\n\ndef test_interleaved():\n    assert is_balanced(\"([)]\") is False\n\ndef test_empty():\n    assert is_balanced(\"\") is True\n\ndef test_unclosed():\n    assert is_balanced(\"((\") is False\n\ndef test_extra_closer():\n    assert is_balanced(\"())\") is False\n    assert is_balanced(\"]\") is False\n"
+  "lang": "rust",
+  "prompt": "Given a string `s` made only of the characters ( ) [ ] { }, decide whether the brackets are balanced. A string is balanced when every opening bracket is closed by the same kind of bracket, and brackets close in the reverse order they were opened. The empty string is balanced.\n\nSignature: `fn is_balanced(s: &str) -> bool`\n\nExample:\n  is_balanced(\"{[()]}()\") -> true\n  is_balanced(\"([)]\") -> false",
+  "starter": "pub fn is_balanced(s: &str) -> bool {\n    todo!()\n}\n",
+  "tests": "#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn balanced() {\n        assert!(is_balanced(\"{[()]}()\"));\n    }\n\n    #[test]\n    fn interleaved() {\n        assert!(!is_balanced(\"([)]\"));\n    }\n\n    #[test]\n    fn empty() {\n        assert!(is_balanced(\"\"));\n    }\n\n    #[test]\n    fn unclosed() {\n        assert!(!is_balanced(\"((\"));\n    }\n\n    #[test]\n    fn extra_closer() {\n        assert!(!is_balanced(\"())\"));\n        assert!(!is_balanced(\"]\"));\n    }\n}"
 }
