@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""loop: do loop {} problems in your own editor, synced with the server.
+
+  loop list [rust|code]   list problems
+  loop next [rust|code]   fetch a random problem you haven't started here
+  loop get <id>           fetch a problem into ./<id>/ (keeps your local solution)
+  loop test [dir|id]      cargo test locally; on the server if cargo is missing (--remote forces it)
+  loop push [dir|id]      save src/solution.rs to the server (the website shows it)
+  loop pull [dir|id]      overwrite src/solution.rs with the server copy
+
+Server: $LOOP_URL (default http://bzguru-ram:8090)
+"""
+import json, os, random, shutil, subprocess, sys, urllib.request
+
+URL = os.environ.get("LOOP_URL", "http://bzguru-ram:8090").rstrip("/")
+
+
+def api(path, body=None):
+    req = urllib.request.Request(URL + path, None if body is None else json.dumps(body).encode(),
+                                 {"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.load(r)
+
+
+def problems(track=None):
+    return [p for p in api("/problems.json") if p.get("tests") and (not track or p["track"] == track)]
+
+
+def locate(arg):
+    """dir or id -> (dir, id). No arg: walk up from cwd to the problem folder."""
+    if arg:
+        d = arg if os.path.isdir(arg) else os.path.join(".", arg)
+    else:
+        d = os.getcwd()
+        while not os.path.exists(os.path.join(d, "src", "solution.rs")) and os.path.dirname(d) != d:
+            d = os.path.dirname(d)
+    d = os.path.abspath(d)
+    if not os.path.exists(os.path.join(d, "src", "solution.rs")):
+        sys.exit(f"no problem folder at {d} (run `loop get <id>` first)")
+    return d, os.path.basename(d)
+
+
+def solution(d):
+    return open(os.path.join(d, "src", "solution.rs")).read()
+
+
+def get(pid):
+    j = api(f"/api/workspace/{pid}")
+    for name, body in j["files"].items():
+        path = os.path.join(pid, name)
+        if name == "src/solution.rs" and os.path.exists(path) and open(path).read() != body:
+            print(f"kept your local {path} (server copy differs; `loop pull` to take it)")
+            continue
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        open(path, "w").write(body)
+    print(f"{pid}: {j['files']['README.md'].splitlines()[0][2:]}")
+    print(f"  edit {pid}/src/solution.rs, then `loop test {pid}`")
+
+
+def main(argv):
+    cmd, args = (argv[0], argv[1:]) if argv else ("help", [])
+    remote = "--remote" in args
+    args = [a for a in args if a != "--remote"]
+    arg = args[0] if args else None
+    if cmd == "list":
+        for p in problems(arg):
+            print(f"{p['id']:10} {p['difficulty']:7} {p['title']}")
+    elif cmd == "next":
+        fresh = [p for p in problems(arg) if not os.path.exists(p["id"])]
+        if not fresh:
+            sys.exit("you've fetched every problem here")
+        get(random.choice(fresh)["id"])
+    elif cmd == "get" and arg:
+        get(arg)
+    elif cmd == "test":
+        d, pid = locate(arg)
+        if not remote and shutil.which("cargo"):
+            sys.exit(subprocess.call(["cargo", "test", "-q"], cwd=d))
+        j = api("/api/run", {"id": pid, "code": solution(d)})
+        print(j.get("output") or j.get("error"))
+        sys.exit(0 if j.get("ok") else 1)
+    elif cmd == "push":
+        d, pid = locate(arg)
+        api(f"/api/workspace/{pid}", {"code": solution(d)})
+        print(f"pushed {pid}")
+    elif cmd == "pull":
+        d, pid = locate(arg)
+        open(os.path.join(d, "src", "solution.rs"), "w").write(api(f"/api/workspace/{pid}")["files"]["src/solution.rs"])
+        print(f"pulled {pid}")
+    else:
+        print(__doc__.strip())
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
